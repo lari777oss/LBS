@@ -2,132 +2,994 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#090909">
   <title>LifeBookStory — Life Mode</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
+
+    html, body { height: 100%; }
 
     body {
       margin: 0;
       min-height: 100vh;
+      min-height: 100dvh;
       font-family: Arial, sans-serif;
-      background: #111;
-      color: white;
+      background: #090909;
+      color: #fff;
       display: flex;
-      align-items: center;
       justify-content: center;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .app {
       width: 100%;
-      max-width: 520px;
+      max-width: 560px;
       min-height: 100vh;
-      padding: 40px 24px;
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
+      padding:
+        calc(28px + env(safe-area-inset-top))
+        calc(22px + env(safe-area-inset-right))
+        calc(28px + env(safe-area-inset-bottom))
+        calc(22px + env(safe-area-inset-left));
     }
 
-    .logo {
-      font-size: 42px;
-      margin-bottom: 12px;
-    }
+    .logo { font-size: 40px; margin-bottom: 8px; }
 
-    h1 {
-      margin: 0;
-      font-size: 30px;
-    }
+    h1 { margin: 0; font-size: 30px; }
 
     .subtitle {
-      margin-top: 12px;
+      margin-top: 10px;
       color: #aaa;
       line-height: 1.5;
     }
 
     .orb {
-      width: 180px;
-      height: 180px;
+      width: 190px;
+      height: 190px;
       border-radius: 50%;
-      margin: 50px 0 35px;
-      background: radial-gradient(circle, #ffffff 0%, #777 35%, #222 70%);
-      box-shadow: 0 0 60px rgba(255,255,255,0.15);
+      margin: 40px 0 28px;
+      background: radial-gradient(
+        circle,
+        #fff 0%,
+        #9a9a9a 28%,
+        #343434 62%,
+        #111 76%
+      );
+      box-shadow: 0 0 70px rgba(255, 255, 255, 0.16);
+      transition: box-shadow 0.35s ease, transform 0.35s ease;
+      will-change: transform, box-shadow;
+    }
+
+    .orb[data-state="connecting"] {
+      animation: pulse 1.4s infinite ease-in-out;
+      box-shadow: 0 0 80px rgba(120, 180, 255, 0.35);
+    }
+
+    .orb[data-state="listening"] {
+      animation: pulse 1.6s infinite ease-in-out;
+      box-shadow: 0 0 100px rgba(120, 255, 170, 0.35);
+    }
+
+    .orb[data-state="thinking"] {
+      animation: pulse 0.9s infinite ease-in-out;
+      box-shadow: 0 0 80px rgba(255, 200, 110, 0.40);
+    }
+
+    .orb[data-state="speaking"] {
+      animation: pulse 1.8s infinite ease-in-out;
+      box-shadow: 0 0 120px rgba(255, 255, 255, 0.45);
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.06); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .orb { animation: none !important; }
     }
 
     .status {
-      font-size: 18px;
-      margin-bottom: 25px;
+      min-height: 28px;
+      font-size: 17px;
+      margin-bottom: 20px;
+      color: #fff;
     }
 
-    button {
-      border: none;
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .btn {
+      border: 0;
       border-radius: 30px;
-      padding: 17px 35px;
-      font-size: 18px;
+      padding: 15px 28px;
+      font-size: 17px;
       cursor: pointer;
-      background: white;
-      color: black;
+      font-family: inherit;
+      transition: background 0.2s ease, opacity 0.2s ease;
     }
 
-    button:active {
-      transform: scale(0.97);
+    .btn:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 3px;
     }
+
+    .btn--primary {
+      background: #fff;
+      color: #000;
+    }
+
+    .btn--ghost {
+      background: #1a1a1a;
+      color: #fff;
+      border: 1px solid #333;
+    }
+
+    .btn--ghost.active {
+      background: #442222;
+      border-color: #883333;
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    .session-info {
+      margin-top: 16px;
+      font-size: 12px;
+      color: #777;
+    }
+
+    .session-info b { color: #aaa; font-weight: normal; }
+
+    .log {
+      width: 100%;
+      margin-top: 22px;
+      padding: 12px 14px;
+      min-height: 42px;
+      border-radius: 14px;
+      background: #141414;
+      color: #999;
+      font-size: 13px;
+      line-height: 1.45;
+      text-align: left;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .log.ok   { color: #7bd88a; }
+    .log.warn { color: #e6b96a; }
+    .log.err  { color: #e67a7a; }
 
     .note {
-      margin-top: 25px;
-      color: #777;
-      font-size: 13px;
+      margin-top: 16px;
+      color: #666;
+      font-size: 12px;
     }
+
+    [hidden] { display: none !important; }
   </style>
 </head>
 
 <body>
 
-  <div class="app">
+<main class="app" id="app">
 
-    <div class="logo">📖</div>
+  <div class="logo">📖</div>
+  <h1>LifeBookStory</h1>
 
-    <h1>LifeBookStory</h1>
-
-    <div class="subtitle">
-      Life Mode<br>
-      Живой разговор о твоей жизни
-    </div>
-
-    <div class="orb"></div>
-
-    <div class="status" id="status">
-      Готов к разговору
-    </div>
-
-    <button id="startButton">
-      🎧 Начать разговор
-    </button>
-
-    <div class="note">
-      Говори свободно. Я буду слушать.
-    </div>
-
+  <div class="subtitle">
+    Life Mode<br>
+    Живой разговор о твоей жизни
   </div>
 
-  <script>
-    const button = document.getElementById("startButton");
-    const status = document.getElementById("status");
+  <div id="orb" class="orb" data-state="idle"></div>
 
-    button.addEventListener("click", async () => {
-      status.textContent = "Подключение...";
-      button.disabled = true;
+  <div id="status" class="status" aria-live="polite">
+    Готов к разговору
+  </div>
 
-      // Здесь позже подключим OpenAI Realtime
-      setTimeout(() => {
-        status.textContent = "Life Mode готовится...";
-      }, 1000);
+  <div class="controls">
+    <button id="startButton" class="btn btn--primary" type="button">
+      🎧 Начать разговор
+    </button>
+    <button id="muteButton" class="btn btn--ghost" type="button" hidden>
+      🔇 Без звука
+    </button>
+    <button id="stopButton" class="btn btn--ghost" type="button" hidden>
+      Завершить
+    </button>
+  </div>
+
+  <div id="sessionInfo" class="session-info" hidden></div>
+
+  <div id="log" class="log" role="log" aria-live="polite">
+    Нажми «Начать разговор» и разреши доступ к микрофону.
+  </div>
+
+  <div class="note">Говори свободно. Я буду слушать.</div>
+
+</main>
+
+
+<script>
+"use strict";
+
+/* =========================================================
+ *  КОНФИГ
+ * ========================================================= */
+
+var CONFIG = {
+  tokenUrl:
+    "https://lifebookstory.app.n8n.cloud/webhook-test/9a5deaa3-2c4c-4e8b-85cc-26d154046cda",
+
+  // saveUrl ПОКА ПУСТОЙ. Когда поднимешь webhook в n8n —
+  // впиши сюда URL, и автосохранение включится само.
+  saveUrl: "",
+
+  realtimeUrl: "https://api.openai.com/v1/realtime/calls",
+
+  voice: "marin",
+  transcriptionModel: "gpt-4o-mini-transcribe",
+
+  fetchTimeoutMs: 15000,
+  saveDebounceMs: 3000,
+
+  storageCurrent: "lbs_session_current",
+  storagePrefix: "lbs_session_",
+
+  resumeRecapLimit: 20
+};
+
+
+var INTERVIEWER_INSTRUCTIONS = [
+  "Ты — голосовой интервьюер LifeBookStory.",
+  "",
+  "Твоя задача — глубоко и естественно собирать материал о жизни человека для будущей книги. Не пиши книгу во время интервью.",
+  "",
+  "Правила:",
+  "",
+  "- Всегда говори на языке пользователя.",
+  "- Будь спокойным, внимательным и естественным.",
+  "- Не представляйся заново и не объясняй технические ограничения.",
+  "- Задавай только ОДИН основной открытый вопрос за раз.",
+  "- После ответа коротко отрази 1–2 важных детали и задай следующий глубокий вопрос.",
+  "- Не превращай разговор в анкету и не задавай серию вопросов.",
+  "- Проси конкретику: люди, места, даты, запахи, звуки, детали обстановки, эмоции, конфликты, решения, ошибки, победы и переломные моменты.",
+  "- Если человек отвечает коротко, мягко попроси рассказать подробнее.",
+  "- Следи за уже сказанным и возвращайся к важным деталям позже.",
+  "- Не выдумывай факты.",
+  "- Не давай советов, оценок и морализаторства.",
+  "- Если человек рассказывает яркую историю, сначала углубись в неё, а не механически возвращайся к хронологии.",
+  "- Не торопись.",
+  "- Речь должна быть короткой и разговорной, без длинных монологов.",
+  "- Начни с естественного первого вопроса о жизни человека."
+].join("\n");
+
+
+/* =========================================================
+ *  DOM
+ * ========================================================= */
+
+var el = {
+  app:         document.getElementById("app"),
+  orb:         document.getElementById("orb"),
+  status:      document.getElementById("status"),
+  log:         document.getElementById("log"),
+  sessionInfo: document.getElementById("sessionInfo"),
+  startBtn:    document.getElementById("startButton"),
+  muteBtn:     document.getElementById("muteButton"),
+  stopBtn:     document.getElementById("stopButton")
+};
+
+
+/* =========================================================
+ *  СОСТОЯНИЕ
+ * ========================================================= */
+
+var state = {
+  pc: null,
+  dc: null,
+  micStream: null,
+  micTrack: null,
+  remoteAudio: null,
+
+  active: false,
+  muted: false,
+
+  session: {
+    id: null,
+    startedAt: null,
+    messages: []
+  },
+
+  saveTimer: null,
+  saveInFlight: false,
+  savePending: false
+};
+
+
+/* =========================================================
+ *  UI ХЕЛПЕРЫ
+ * ========================================================= */
+
+function setOrb(s) {
+  el.orb.dataset.state = s;
+}
+
+function setStatus(text) {
+  el.status.textContent = text;
+}
+
+function logLine(text, cls) {
+  el.log.textContent = text;
+  el.log.className = "log" + (cls ? " " + cls : "");
+}
+
+function showSessionInfo(html) {
+  if (!html) {
+    el.sessionInfo.hidden = true;
+    el.sessionInfo.textContent = "";
+    return;
+  }
+  el.sessionInfo.innerHTML = html;
+  el.sessionInfo.hidden = false;
+}
+
+function shortId(id) {
+  return id ? id.slice(0, 8) : "";
+}
+
+
+/* =========================================================
+ *  УТИЛИТЫ
+ * ========================================================= */
+
+function generateSessionId() {
+  if (window.crypto && window.crypto.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return "s_" + Date.now().toString(36) + "_" +
+         Math.random().toString(36).slice(2, 10);
+}
+
+function fetchWithTimeout(url, options, timeoutMs) {
+  var ctrl = new AbortController();
+  var timer = setTimeout(function () { ctrl.abort(); }, timeoutMs);
+  var opts = Object.assign({}, options, { signal: ctrl.signal });
+
+  return fetch(url, opts).catch(function (err) {
+    if (err && err.name === "AbortError") {
+      throw new Error("Превышено время ожидания (" + timeoutMs + " мс)");
+    }
+    throw err;
+  }).then(function (res) {
+    clearTimeout(timer);
+    return res;
+  }, function (err) {
+    clearTimeout(timer);
+    throw err;
+  });
+}
+
+
+/* =========================================================
+ *  LOCALSTORAGE
+ * ========================================================= */
+
+function persistLocal() {
+  if (!state.session.id) return;
+  try {
+    var key = CONFIG.storagePrefix + state.session.id;
+    var payload = {
+      id: state.session.id,
+      startedAt: state.session.startedAt,
+      messages: state.session.messages,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem(key, JSON.stringify(payload));
+    localStorage.setItem(CONFIG.storageCurrent, state.session.id);
+  } catch (err) {
+    console.warn("localStorage write failed", err);
+  }
+}
+
+function loadStoredSession() {
+  try {
+    var id = localStorage.getItem(CONFIG.storageCurrent);
+    if (!id) return null;
+    var raw = localStorage.getItem(CONFIG.storagePrefix + id);
+    if (!raw) return null;
+    var data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.messages)) return null;
+    return data;
+  } catch (err) {
+    console.warn("localStorage read failed", err);
+    return null;
+  }
+}
+
+function clearStoredSession() {
+  try {
+    var id = localStorage.getItem(CONFIG.storageCurrent);
+    if (id) localStorage.removeItem(CONFIG.storagePrefix + id);
+    localStorage.removeItem(CONFIG.storageCurrent);
+  } catch (err) {
+    // игнорируем
+  }
+}
+
+
+/* =========================================================
+ *  SESSION MODEL
+ * ========================================================= */
+
+function addMessage(speaker, text) {
+  var clean = (text || "").trim();
+  if (!clean) return;
+
+  state.session.messages.push({
+    sequence: state.session.messages.length,
+    timestamp: new Date().toISOString(),
+    speaker: speaker,
+    text: clean
+  });
+
+  persistLocal();
+  scheduleSave();
+}
+
+
+/* =========================================================
+ *  СОХРАНЕНИЕ В N8N (debounce)
+ * ========================================================= */
+
+function scheduleSave() {
+  // Если saveUrl ещё не задан — сохраняем только локально
+  if (!CONFIG.saveUrl) return;
+  if (!state.session.id) return;
+
+  state.savePending = true;
+
+  if (state.saveTimer) clearTimeout(state.saveTimer);
+  state.saveTimer = setTimeout(function () {
+    state.saveTimer = null;
+    flushSave();
+  }, CONFIG.saveDebounceMs);
+}
+
+function flushSave() {
+  if (!CONFIG.saveUrl) return;
+  if (!state.session.id) return;
+  if (state.saveInFlight) return;
+
+  state.saveInFlight = true;
+  state.savePending = false;
+
+  var payload = {
+    session_id: state.session.id,
+    started_at: state.session.startedAt,
+    saved_at: new Date().toISOString(),
+    messages: state.session.messages
+  };
+
+  fetchWithTimeout(
+    CONFIG.saveUrl,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    },
+    CONFIG.fetchTimeoutMs
+  ).then(function (res) {
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    logLine(
+      "💾 Сохранено (" + state.session.messages.length + " реплик) · " +
+      new Date().toLocaleTimeString(),
+      "ok"
+    );
+  }).catch(function (err) {
+    console.warn("Save to n8n failed:", err);
+    logLine("⚠️ Не удалось сохранить на сервер, копия — локально.", "warn");
+  }).then(function () {
+    state.saveInFlight = false;
+    if (state.savePending) scheduleSave();
+  });
+}
+
+
+/* =========================================================
+ *  INSTRUCTIONS + РЕКАП ПРИ ПРОДОЛЖЕНИИ
+ * ========================================================= */
+
+function buildInstructions() {
+  var base = INTERVIEWER_INSTRUCTIONS;
+
+  if (state.session.messages.length === 0) return base;
+
+  var recap = state.session.messages
+    .slice(-CONFIG.resumeRecapLimit)
+    .map(function (m) {
+      var who = (m.speaker === "user") ? "Пользователь" : "Интервьюер";
+      return who + ": " + m.text;
+    })
+    .join("\n");
+
+  return base + "\n\n" +
+    "ПРЕДЫДУЩИЙ КОНТЕКСТ (это продолжение прерванного разговора, " +
+    "не переспрашивай то, что уже рассказано):\n" +
+    recap + "\n\n" +
+    "Продолжи разговор естественно — короткая связка и следующий глубокий вопрос.";
+}
+
+
+/* =========================================================
+ *  ЗАПУСК LIFE MODE
+ * ========================================================= */
+
+function startLifeMode() {
+  if (state.active) return;
+
+  el.startBtn.disabled = true;
+  el.muteBtn.hidden = true;
+  el.stopBtn.hidden = true;
+  el.app.setAttribute("aria-busy", "true");
+
+  setOrb("connecting");
+
+  var ephemeralKey = null;
+
+  // 1. Восстановление / создание сессии
+  var stored = loadStoredSession();
+  if (stored && stored.messages.length > 0) {
+    state.session = {
+      id: stored.id,
+      startedAt: stored.startedAt,
+      messages: stored.messages
+    };
+  } else if (!state.session.id || state.session.messages.length === 0) {
+    state.session = {
+      id: generateSessionId(),
+      startedAt: new Date().toISOString(),
+      messages: []
+    };
+  }
+
+  showSessionInfo(
+    "Сессия <b>" + shortId(state.session.id) + "</b> · реплик: <b>" +
+    state.session.messages.length + "</b>"
+  );
+
+  // 2. Токен
+  setStatus("Получаю временный ключ…");
+  logLine("Получаю временный ключ…");
+
+  fetchWithTimeout(
+    CONFIG.tokenUrl,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ source: "lifebookstory-life-mode" })
+    },
+    CONFIG.fetchTimeoutMs
+  ).then(function (tokenRes) {
+    if (!tokenRes.ok) {
+      throw new Error("n8n: HTTP " + tokenRes.status);
+    }
+    return tokenRes.json();
+  }).then(function (tokenData) {
+    ephemeralKey = tokenData && tokenData.value;
+    if (!ephemeralKey) {
+      throw new Error("n8n не вернул ephemeral client secret");
+    }
+
+    setStatus("Разреши доступ к микрофону…");
+    logLine("Разреши доступ к микрофону…");
+
+    return navigator.mediaDevices.getUserMedia({ audio: true });
+
+  }).then(function (micStream) {
+    state.micStream = micStream;
+    state.micTrack = micStream.getAudioTracks()[0];
+
+    setStatus("Соединяюсь…");
+    logLine("Устанавливаю соединение…");
+
+    state.pc = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
     });
-  </script>
+
+    state.remoteAudio = document.createElement("audio");
+    state.remoteAudio.autoplay = true;
+    state.remoteAudio.playsInline = true;
+    document.body.appendChild(state.remoteAudio);
+
+    state.pc.ontrack = function (event) {
+      if (!state.remoteAudio.srcObject) {
+        state.remoteAudio.srcObject = new MediaStream();
+      }
+      state.remoteAudio.srcObject.addTrack(event.track);
+      var playPromise = state.remoteAudio.play();
+      if (playPromise && playPromise.catch) playPromise.catch(function () {});
+    };
+
+    state.pc.oniceconnectionstatechange = function () {
+      if (!state.pc) return;
+      var s = state.pc.iceConnectionState;
+      if (s === "failed" || s === "disconnected" || s === "closed") {
+        logLine("🔌 Соединение потеряно (" + s + ")", "err");
+        stopLifeMode("connection_lost");
+      }
+    };
+
+    micStream.getTracks().forEach(function (track) {
+      state.pc.addTrack(track, micStream);
+    });
+
+    state.dc = state.pc.createDataChannel("oai-events");
+    setupDataChannel(state.dc);
+
+    return state.pc.createOffer();
+
+  }).then(function (offer) {
+    return state.pc.setLocalDescription(offer).then(function () {
+      return offer;
+    });
+
+  }).then(function (offer) {
+    return fetchWithTimeout(
+      CONFIG.realtimeUrl,
+      {
+        method: "POST",
+        body: offer.sdp,
+        headers: {
+          "Authorization": "Bearer " + ephemeralKey,
+          "Content-Type": "application/sdp"
+        }
+      },
+      CONFIG.fetchTimeoutMs
+    );
+
+  }).then(function (sdpRes) {
+    if (!sdpRes.ok) {
+      return sdpRes.text().then(function (errText) {
+        throw new Error(
+          "OpenAI Realtime: HTTP " + sdpRes.status + " " + errText
+        );
+      });
+    }
+    return sdpRes.text();
+
+  }).then(function (answerSdp) {
+    return state.pc.setRemoteDescription({
+      type: "answer",
+      sdp: answerSdp
+    });
+
+  }).catch(function (err) {
+    handleStartError(err);
+  });
+}
+
+
+/* =========================================================
+ *  DATACHANNEL
+ * ========================================================= */
+
+function setupDataChannel(dc) {
+
+  dc.addEventListener("open", function () {
+    state.active = true;
+
+    // session.update: инструкция + транскрипция обеих сторон
+    dc.send(JSON.stringify({
+      type: "session.update",
+      session: {
+        instructions: buildInstructions(),
+        audio: {
+          input: {
+            transcription: { model: CONFIG.transcriptionModel },
+            turn_detection: { type: "semantic_vad" }
+          },
+          output: { voice: CONFIG.voice }
+        }
+      }
+    }));
+
+    var isResume = state.session.messages.length > 0;
+
+    dc.send(JSON.stringify({
+      type: "response.create",
+      response: {
+        instructions: isResume
+          ? "Продолжи разговор естественно — короткая связка и следующий глубокий вопрос. Не здоровайся заново."
+          : "Начни разговор естественно: короткое приветствие и один глубокий открытый вопрос о жизни человека."
+      }
+    }));
+
+    setOrb("listening");
+    setStatus("Life Mode активен");
+    logLine("Говори свободно. Я слушаю.");
+
+    el.stopBtn.hidden = false;
+    el.muteBtn.hidden = false;
+    el.startBtn.disabled = true;
+    el.app.removeAttribute("aria-busy");
+  });
+
+  dc.addEventListener("message", function (event) {
+    var data;
+    try {
+      data = JSON.parse(event.data);
+    } catch (err) {
+      return;
+    }
+
+    switch (data.type) {
+
+      case "input_audio_buffer.speech_started":
+        setOrb("listening");
+        setStatus("Слушаю…");
+        break;
+
+      case "input_audio_buffer.speech_stopped":
+        setOrb("thinking");
+        setStatus("Думаю…");
+        break;
+
+      case "conversation.item.input_audio_transcription.completed":
+        addMessage("user", data.transcript);
+        break;
+
+      case "response.output_audio_transcript.done":
+      case "response.audio_transcript.done":
+        addMessage("interviewer", data.transcript);
+        break;
+
+      case "output_audio_buffer.started":
+        setOrb("speaking");
+        setStatus("Говорю…");
+        break;
+
+      case "output_audio_buffer.stopped":
+        setOrb("listening");
+        setStatus("Life Mode активен");
+        break;
+
+      case "response.done":
+        if (el.orb.dataset.state !== "speaking") {
+          setOrb("listening");
+          setStatus("Life Mode активен");
+        }
+        break;
+
+      case "error":
+        console.error("Realtime error:", data.error);
+        logLine(
+          "Ошибка Realtime: " +
+          ((data.error && data.error.message) ? data.error.message : "неизвестно"),
+          "err"
+        );
+        break;
+    }
+  });
+
+  dc.addEventListener("close", function () {
+    if (state.active) {
+      logLine("Канал данных закрыт.", "warn");
+    }
+  });
+
+  dc.addEventListener("error", function (e) {
+    console.error("DataChannel error:", e);
+  });
+}
+
+
+/* =========================================================
+ *  MUTE
+ * ========================================================= */
+
+function toggleMute() {
+  if (!state.micTrack) return;
+
+  state.muted = !state.muted;
+  state.micTrack.enabled = !state.muted;
+
+  el.muteBtn.textContent = state.muted ? "🔊 Включить звук" : "🔇 Без звука";
+  if (state.muted) {
+    el.muteBtn.classList.add("active");
+  } else {
+    el.muteBtn.classList.remove("active");
+  }
+}
+
+
+/* =========================================================
+ *  ЗАВЕРШЕНИЕ / ОЧИСТКА
+ * ========================================================= */
+
+function stopLifeMode(reason) {
+  if (!state.active && !state.pc && !state.micStream) return;
+
+  if (state.saveTimer) {
+    clearTimeout(state.saveTimer);
+    state.saveTimer = null;
+  }
+
+  if (state.session.id && state.session.messages.length > 0) {
+    persistLocal();
+    flushSave();
+  }
+
+  if (state.dc) { try { state.dc.close(); } catch (e) {} }
+  if (state.pc) { try { state.pc.close(); } catch (e) {} }
+
+  if (state.micStream) {
+    state.micStream.getTracks().forEach(function (t) {
+      try { t.stop(); } catch (e) {}
+    });
+  }
+
+  if (state.remoteAudio) {
+    try { state.remoteAudio.srcObject = null; } catch (e) {}
+    state.remoteAudio.remove();
+  }
+
+  state.pc = null;
+  state.dc = null;
+  state.micStream = null;
+  state.micTrack = null;
+  state.remoteAudio = null;
+  state.active = false;
+  state.muted = false;
+
+  setOrb("idle");
+
+  if (reason === "connection_lost") {
+    setStatus("Связь потеряна. Можно продолжить.");
+  } else {
+    setStatus("Готов к разговору");
+  }
+
+  el.startBtn.disabled = false;
+  el.startBtn.textContent = state.session.messages.length > 0
+    ? "🎧 Продолжить разговор"
+    : "🎧 Начать разговор";
+
+  el.muteBtn.hidden = true;
+  el.muteBtn.classList.remove("active");
+  el.muteBtn.textContent = "🔇 Без звука";
+
+  el.stopBtn.hidden = true;
+
+  el.app.removeAttribute("aria-busy");
+
+  if (reason !== "pagehide" && reason !== "connection_lost") {
+    logLine(
+      "Разговор завершён. Реплик сохранено: " +
+      state.session.messages.length + ".",
+      "ok"
+    );
+  }
+}
+
+
+function handleStartError(err) {
+  console.error(err);
+
+  var message = (err && err.message) ? err.message : String(err);
+
+  if (err && err.name === "NotAllowedError") {
+    message = "Доступ к микрофону запрещён. Разреши его в настройках браузера.";
+  } else if (err && err.name === "NotFoundError") {
+    message = "Микрофон не найден.";
+  } else if (err && err.name === "NotReadableError") {
+    message = "Микрофон занят другим приложением.";
+  }
+
+  setOrb("idle");
+  setStatus("Не удалось подключиться");
+  logLine("❌ " + message, "err");
+
+  if (state.dc) { try { state.dc.close(); } catch (e) {} }
+  if (state.pc) { try { state.pc.close(); } catch (e) {} }
+
+  if (state.micStream) {
+    state.micStream.getTracks().forEach(function (t) {
+      try { t.stop(); } catch (e) {}
+    });
+  }
+
+  if (state.remoteAudio) {
+    try { state.remoteAudio.srcObject = null; } catch (e) {}
+    state.remoteAudio.remove();
+  }
+
+  state.pc = null;
+  state.dc = null;
+  state.micStream = null;
+  state.micTrack = null;
+  state.remoteAudio = null;
+  state.active = false;
+
+  el.startBtn.disabled = false;
+  el.muteBtn.hidden = true;
+  el.stopBtn.hidden = true;
+  el.app.removeAttribute("aria-busy");
+}
+
+
+/* =========================================================
+ *  СОБЫТИЯ
+ * ========================================================= */
+
+el.startBtn.addEventListener("click", startLifeMode);
+
+el.stopBtn.addEventListener("click", function () {
+  var ok = window.confirm(
+    "Завершить разговор? Текущая сессия сохранится, " +
+    "ты сможешь продолжить позже."
+  );
+  if (ok) stopLifeMode("user");
+});
+
+el.muteBtn.addEventListener("click", toggleMute);
+
+window.addEventListener("pagehide", function () {
+  if (state.active) {
+    persistLocal();
+    stopLifeMode("pagehide");
+  }
+});
+
+
+/* =========================================================
+ *  ИНИЦИАЛИЗАЦИЯ UI
+ * ========================================================= */
+
+(function init() {
+  var stored = loadStoredSession();
+
+  if (stored && stored.messages.length > 0) {
+    state.session = {
+      id: stored.id,
+      startedAt: stored.startedAt,
+      messages: stored.messages
+    };
+
+    el.startBtn.textContent = "🎧 Продолжить разговор";
+
+    showSessionInfo(
+      "Незавершённый разговор · сессия <b>" + shortId(stored.id) +
+      "</b> · реплик: <b>" + stored.messages.length + "</b>"
+    );
+
+    logLine(
+      "Найден незавершённый разговор (" + stored.messages.length +
+      " реплик). Нажми «Продолжить», чтобы вернуться к нему."
+    );
+  } else {
+    showSessionInfo("");
+    logLine("Нажми «Начать разговор» и разреши доступ к микрофону.");
+  }
+
+  setOrb("idle");
+})();
+</script>
 
 </body>
 </html>
