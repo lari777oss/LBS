@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeBookStory — Life Mode</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 520px;
+      min-height: 100vh;
+      padding: 40px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .logo {
+      font-size: 42px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+    }
+
+    .subtitle {
+      margin-top: 12px;
+      color: #aaa;
+      line-height: 1.5;
+    }
+
+    .orb {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      margin: 50px 0 35px;
+      background: radial-gradient(circle, #ffffff 0%, #777 35%, #222 70%);
+      box-shadow: 0 0 60px rgba(255,255,255,0.15);
+    }
+
+    .status {
+      font-size: 18px;
+      margin-bottom: 25px;
+    }
+
+    button {
+      border: none;
+      border-radius: 30px;
+      padding: 17px 35px;
+      font-size: 18px;
+      cursor: pointer;
+      background: white;
+      color: black;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .note {
+      margin-top: 25px;
+      color: #777;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app">
+
+    <div class="logo">📖</div>
+
+    <h1>LifeBookStory</h1>
+
+    <div class="subtitle">
+      Life Mode<br>
+      Живой разговор о твоей жизни
+    </div>
+
+    <div class="orb"></div>
+
+    <div class="status" id="status">
+      Готов к разговору
+    </div>
+
+    <button id="startButton">
+      🎧 Начать разговор
+    </button>
+
+    <div class="note">
+      Говори свободно. Я буду слушать.
+    </div>
+
+  </div>
+
+  <script>
+    const button = document.getElementById("startButton");
+    const status = document.getElementById("status");
+
+    button.addEventListener("click", async () => {
+      status.textContent = "Подключение...";
+      button.disabled = true;
+
+      // Здесь позже подключим OpenAI Realtime
+      setTimeout(() => {
+        status.textContent = "Life Mode готовится...";
+      }, 1000);
+    });
+  </script>
+
+</body>
+</html>
