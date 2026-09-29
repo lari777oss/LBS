@@ -234,7 +234,7 @@
 
 var CONFIG = {
   tokenUrl:
-    "https://lifebookstory.app.n8n.cloud/webhook-test/9a5deaa3-2c4c-4e8b-85cc-26d154046cda",
+    "https://lifebookstory.app.n8n.cloud/webhook/9a5deaa3-2c4c-4e8b-85cc-26d154046cda",
 
   // saveUrl ПОКА ПУСТОЙ. Когда поднимешь webhook в n8n —
   // впиши сюда URL, и автосохранение включится само.
